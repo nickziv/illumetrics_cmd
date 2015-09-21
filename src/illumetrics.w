@@ -164,7 +164,8 @@ them on disk. We assume ownership over the |~/.illumetrics| directory and store
 the data in |.illumetrics/stor|. We create 1 directory per patron, and within
 each of those directories create a directory for each |rep_type_t|. It is
 within that heirarchy that we store repositories. We do this in order to
-mitigate conflicts between two repos with the same name.
+mitigate conflicts between two repos with the same name. The patron is
+represented by a domain name like |"joyent.com"| or |"omnios.com"|.
 
 Before we do any calculation, we prime the sorage area which entails the
 following: (a)~we try to get all of the repositories up to date, which has the
@@ -242,5 +243,4 @@ Nexenta, Delphix).
 @f lg_gelem_t int
 @f lp_grmr_t int
 @f lp_ast_t int
-@f patron_t int
 @f rep_type_t int
