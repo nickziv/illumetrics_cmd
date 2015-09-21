@@ -26,6 +26,22 @@ There is some text that may also be out dated or in reference to some piece of
 code that doesn't exist anymore. If you run into something that makes no sense
 -- TELL ME.
 
+Dependencies
+============
+
+As it turns out, this code requires some other code that I have written:
+
+	libslablist
+	libgraph
+
+Last I checked libslablist builds on linux, but libgraph doesn't.
+
+We use libgraph for handling some common graph operations. We have a few
+modified variants of the common DFS and BFS algorithms that appear to not exist
+anywhere else.
+
+Not sure if we use slablist directly in the code, but libgraph depends on it.
+
 Problems
 =========
 
