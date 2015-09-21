@@ -1,4 +1,8 @@
 SRC=$(PWD)/../src
+CFLAGS= -m64 -W -Wall
+CINC= -I /opt/libslablist/include -I /opt/libgraph/include
+LDFLAGS= #TODO finish this
+LIBS= -lslablist -lgraph -lumem
 CWEBSRC=$(SRC)/illumetrics.w
 #The outputs of ctangle and cweave should be in build directory
 CSRC=$(PWD)/illumetrics.c
@@ -22,9 +26,12 @@ $(PDF): $(TEXSRC)
 pdf: $(PDF)
 	echo "Made PDF"
 
+code: $(CSRC)
+	echo "Made PDF"
+
 # TODO: implement this
 #exec: $(CSRC)
-#	...
+#	gcc $(CSRC) -o illumetrics $(CINC) $(LDFLAGS) $(LIBS)
 
 
 # We remove everything that isn't this Makefile
