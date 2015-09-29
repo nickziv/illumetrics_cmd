@@ -1,0 +1,45 @@
+SRCDIR=			$(PWD)/../../src
+TOOLS=			$(PWD)/../../tools
+TEST=			$(PWD)/../../tests
+BENCH=			$(PWD)/../../bench
+# The benchmark results directory
+PREFIX=			/opt/illumetrics/
+SLPREFIX=		/opt/libslablist/
+GRPREFIX=		/opt/libgraph/
+
+
+
+DTRACE_LIBS=		$(PREFIX)/include
+DTRACE=			pfexec /usr/sbin/dtrace -L $(DTRACE_LIBS)
+DTRACE_FRAMES=		-x ustackframes=100
+DTRACEH=		/usr/sbin/dtrace -h -s
+DTRACEG=		/usr/sbin/dtrace -G -64 -s
+SO=			libgraph.so.1
+
+
+CC=			gcc
+CKSTATIC=		clang --analyze $(CINC)
+
+#options for illumetrics executable
+CFLAGS=			-m64 -W -Wall 
+CINC=			-I /opt/libslablist/include\
+			-I /opt/libgraph/include\
+			-I /opt/libgit2/include
+
+LDFLAGS_SL=		-R $(SLPREFIX)/lib/64:$(SLPREFIX)/lib 
+LDFLAGS_GR=		-R $(GRPREFIX)/lib/64:$(GRPREFIX)/lib
+LDFLAGS=		$(LDFLAGS_SL) $(LDFLAGS_GR)
+
+LIBS=			-lc -L $(SLPREFIX)/lib/64 -lslablist\
+			-L $(GRPREFIX)/lib/64 -lgraph
+
+C_SRCS=			$(SRCDIR)/illumetrics_umem.c\
+			$(SRCDIR)/illumetrics.c
+
+C_HDRS=			$(SRCDIR)/illumetrics_impl.h
+
+PLISTS:=		$(C_SRCS:%.c=%.plist)
+CSTYLES:=		$(C_SRCS:%.c=%.cstyle)
+C_OBJECTS:=		$(C_SRCS:%.c=%.o)
+
+CSTYLE=			$(TOOLS)/cstyle.pl

@@ -1,30 +1,38 @@
 Building
 ========
 
-Got to `build/` directory and run `make pdf` to get the pdf.
+Got to `build/` directory and run `make illumetrics` to get the executable.
 
-Run `make clean` to remove the junk.
+Run `make clean` to remove everything that was built.
+
+Status
+======
+
+Currently the code BUILDs. However it is still just a collection of stubs and
+ideas and doesn't do anything useful _at all_.
 
 Hacking
 ========
 
-Edit the CWEB file in `src/illumetrics.w`.
+There are 2 files you need to care about:
 
-There's a lot of stuff to be done. If something isn't adequately explained,
-feel free to change it and submit a pull request. Also open to suggestions on
-writing style. For example I once tried to write this program as a first-person
-narrative from the perspective of the illumetrics project. Then I realized that
-everyone would think I had gone crazy, and swiftly deleted it.
+	src/illumetrics_impl.h
+	src/illumentrics.c
 
-Also don't hold back when it comes to adding features. If you have any
-questions about CWEB feel free to ask me. And, of course, google is you friend.
-The cweb manpage sucks. There's a PDF written by Knuth somewhere on the
-internet that describes CWEB.
+The first one defines the structs used, just like in an Illumos-like code base.
 
-There are trains of thought in the CWEB file that describe some of my thinking.
-There is some text that may also be out dated or in reference to some piece of
-code that doesn't exist anymore. If you run into something that makes no sense
--- TELL ME.
+The second one contains all of the code that does stuff.
+
+History
+=======
+
+This program used to be a literate program written in CWEB. You can still dig
+out a (non-working) version from the commit history. The decision has been made
+to move to the Illumos style code because CWEB is tyranical in its requirement
+that _every_ chunk code must have corresponding descriptive prose! We, the free
+programmers of the world, refuse to submit to any kind of authority! We will
+not be told what to do by Knuth and we _certainly_ will not be subjugated by
+our compilers! Live Free or Die!
 
 Dependencies
 ============
@@ -40,7 +48,6 @@ We use libgraph for handling some common graph operations. We have a few
 modified variants of the common DFS and BFS algorithms that appear to not exist
 anywhere else.
 
-Not sure if we use slablist directly in the code, but libgraph depends on it.
 
 Problems
 =========
