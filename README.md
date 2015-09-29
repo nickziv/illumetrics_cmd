@@ -1,7 +1,7 @@
 Building
 ========
 
-Got to `build/` directory and run `make illumetrics` to get the executable.
+Go to `build/illumos` directory and run `make illumetrics` to get the executable.
 
 Run `make clean` to remove everything that was built.
 
