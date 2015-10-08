@@ -384,7 +384,11 @@ repo_pull(repo_t *r)
 /*
  * Returns the next commit. We don't want to load all of the commits into
  * memory, we just stream them, and add their information to the graphs,
- * mentioned in `illumetrics_impl.h`.
+ * mentioned in `illumetrics_impl.h`. The first commit retrieved is the commit
+ * made closest to constraints.cn_start_date. Similarly the last commit
+ * retrieved is the commit made closes to constraints.cn_end_date. If there are
+ * no commits in that range we return NULL. If we reach the end of the commits
+ * in that range, we return NULL.
  */
 repo_commit_t *
 repo_get_next_commit(repo_t *r)
