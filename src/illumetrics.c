@@ -95,6 +95,7 @@ void construct_graphs();
 void
 args_to_constraints(int ac, char **av)
 {
+	(void)ac;
 	if (!strcmp(av[1], "pull")) {
 		constraints.cn_arg = PULL;
 	} else if (!strcmp(av[1], "author")) {
@@ -112,6 +113,7 @@ void purge_unrecognized_repos();
 int
 main(int ac, char **av)
 {
+	ILLUMETRICS_GOT_HERE(__LINE__);
 	args_to_constraints(ac, av);
 	open_fds();
 	load_repositories();
@@ -256,22 +258,44 @@ url_to_repo(char *url, rep_type_t rt)
 void
 copy_dir(char *dir, int fd)
 {
-	int dfd = open(dir, O_SEARCH);
-	struct dirent de;
+	DIR *ddir = opendir(dir);
+	if (ddir == NULL) {
+		perror("copy_dir:opendir:dir");
+		exit(-1);
+	}
+
+	int dfd = dirfd(ddir);
+	if (dfd < 0) {
+		perror("copy_dir:dirfd:ddir");
+		exit(-1);
+	}
+
+	struct dirent *de;
 	struct stat st;
-	int g;
 	while (1) {
-		g = getdents(dfd, &de, FILENAME_MAX + 1);
-		if (!g) {
+		de = readdir(ddir);
+		if (de == NULL) {
+			if (errno != 0) {
+				perror("copy_dir:readdir");
+				exit(-1);
+			}
 			break;
 		}
-		int cp_from = openat(dfd, de.d_name, O_RDONLY);
+		int cp_from = openat(dfd, de->d_name, O_RDONLY);
 		int fst = fstat(fd, &st);
-		if (fst) {
-			/* TODO handle this error */
+		if (fst < 0) {
+			perror("copy_dir:fstat");
+			//printf("errno = %d\n", errno);
+			exit(-1);
 		}
-		int cp_to = openat(fd, de.d_name, O_RDWR | O_CREAT);
+		int cp_to = openat(fd, de->d_name, O_RDWR | O_CREAT);
 		void *buf = ilm_mk_buf(st.st_size);
+		if (buf == NULL) {
+			fprintf(stderr, "%s %s\n",
+				"Out of memory when copying",
+				"list files to ~/.illumetrics.");
+			exit(-1);
+		}
 		atomic_read(cp_from, buf, st.st_size);
 		atomic_write(cp_to, buf, st.st_size);
 		ilm_rm_buf(buf, st.st_size);
@@ -315,7 +339,7 @@ retry_list_fd_open:;
 				fprintf(stderr,
 				    "Unrecognized repository URL: %s\n",
 				    urls[j]);
-				exit(1);
+				exit(-1);
 			} else {
 				int slstat = slablist_add(repos, srep, 0);
 				if (slstat == SL_EDUP) {
@@ -324,7 +348,7 @@ retry_list_fd_open:;
 					fprintf(stderr,
 					    "Duplicate repository URL: %s\n",
 					    urls[j]);
-				exit(2);
+					exit(-1);
 				}
 			}
 			j++;
@@ -357,16 +381,90 @@ retry_list_fd_open:;
 void
 open_fds()
 {
+	char cwd[PATH_MAX];
+	char *cwdret = getcwd(cwd, PATH_MAX);
+	if (cwdret == NULL) {
+		perror("open_fds:getcwd");
+		exit(-1);
+	}
 	uid = getuid();
 	pwd = getpwuid(uid);
 	home = pwd->pw_dir;
-	home_fd = open(home, O_RDWR);
-	mkdirat(home_fd, ".illumetrics", S_IRWXU);
-	mkdirat(illumetrics_fd, "stor", S_IRWXU);
-	mkdirat(illumetrics_fd, "lists", S_IRWXU);
-	illumetrics_fd = openat(home_fd, ".illumetrics", O_RDWR);
-	stor_fd = openat(illumetrics_fd, "stor", O_RDWR);
-	lists_fd = openat(illumetrics_fd, "lists", O_RDWR);
+	DIR *home_dir = opendir(home);
+	if (home_dir == NULL) {
+		perror("open_fds:opendir:$HOME");
+		exit(-1);
+	}
+	home_fd = dirfd(home_dir);
+	int ch = chdir(home);
+	if (ch < 0) {
+		perror("open_fds:chdir:$HOME");
+		exit(-1);
+	}
+	if (home_fd < 0) {
+		perror("open_fds:dirfd:$HOME");
+		exit(-1);
+	}
+
+	int mkd = mkdirat(home_fd, ".illumetrics", S_IRWXU);
+	/* It's quite possible that users have an existing .illumetrics db */
+	if (mkd < 0 && errno != EEXIST) {
+		perror("open_fds:mkdir:.illumetrics");
+		exit(-1);
+	}
+
+	DIR *illumetrics_dir = opendir(".illumetrics");
+	if (illumetrics_dir == NULL) {
+		perror("open_fds:opendir:$HOME/.illumetrics");
+		exit(-1);
+	}
+	illumetrics_fd = dirfd(illumetrics_dir);
+
+
+	mkd = mkdirat(illumetrics_fd, "stor", S_IRWXU);
+	if (mkd < 0 && errno != EEXIST) {
+		perror("open_fds:mkdir:stor");
+		exit(-1);
+	}
+
+	mkd = mkdirat(illumetrics_fd, "lists", S_IRWXU);
+	if (mkd < 0 && errno != EEXIST) {
+		perror("open_fds:mkdir:lists");
+		exit(-1);
+	}
+
+	ch = fchdir(illumetrics_fd);
+	if (ch < 0) {
+		perror("open_fds:fchdir:illumetrics_fd");
+		exit(-1);
+	}
+	DIR *stor_dir = opendir("stor");
+	if (stor_dir == NULL) {
+		perror("open_fds:opendir:stor");
+		exit(-1);
+	}
+	stor_fd = dirfd(stor_dir);
+	if (stor_fd < 0) {
+		perror("open_fds:dirfd:stor");
+		exit(-1);
+	}
+
+	DIR *lists_dir = opendir("lists");
+	if (lists_dir == NULL) {
+		perror("open_fds:opendir:lists");
+		exit(-1);
+	}
+	lists_fd = dirfd(lists_dir);
+	if (lists_fd < 0) {
+		perror("open_fds:open:lists");
+		exit(-1);
+	}
+	/* we change back to our original cwd */
+	ch = chdir(cwd);
+	if (ch < 0) {
+		perror("open_fds:chdir:$OLDCWD");
+		exit(-1);
+	}
 }
 
 /*
@@ -387,14 +485,24 @@ repo_pull(repo_t *r)
 	switch (r->rp_vcs) {
 
 	case GIT:
+		fprintf(stderr, "Pull not supported on Git repositories.\n");
+		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
 		break;
 	case HG:
+		fprintf(stderr, "Pull not supported on Mercurial repositories.\n");
+		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
 		break;
 	case SVN:
+		fprintf(stderr, "Pull not supported on SVN repositories.\n");
+		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
 		break;
 	case CVS:
+		fprintf(stderr, "Pull not supported on CVS repositories.\n");
+		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
 		break;
 	case SCCS:
+		fprintf(stderr, "Pull not supported on SCCS repositories.\n");
+		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
 		break;
 	}
 }
@@ -469,7 +577,6 @@ update_all_repos()
 void
 purge_unrecognized_repos()
 {
-
 }
 
 

@@ -4,12 +4,21 @@ LIBS+=		-lumem
 
 CFLAGS+=	-D UMEM
 
-OBJECTS=	$(C_OBJECTS)
+OBJECTS=	$(C_OBJECTS) $(D_OBJECTS)
 
-$(C_SRCS): %.c: $(C_HDRS)
+ILLUMETRICS_PROV=	illumetrics_provider.d
+
+$(D_HDRS):
+	$(DTRACEH) $(SRCDIR)/$(D_SCR) -o $(SRCDIR)/$(D_HDRS)
+
+$(C_SRCS): %.c: $(C_HDRS) $(D_HDRS)
+
 
 $(C_OBJECTS): %.o: %.c $(C_HDRS)
 	$(CC) $(CFLAGS) $(CINC) -o $@ -c $<
+
+$(D_OBJECTS): $(C_OBJECTS)
+	$(DTRACEG) $(SRCDIR)/$(ILLUMETRICS_PROV) $(C_OBJECTS)
 
 objs: $(OBJECTS)
 

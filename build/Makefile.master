@@ -39,10 +39,14 @@ LIBS=			-lc -L $(SLPREFIX)/lib/64 -lslablist\
 C_SRCS=			$(SRCDIR)/illumetrics_umem.c\
 			$(SRCDIR)/illumetrics.c
 
-C_HDRS=			$(SRCDIR)/illumetrics_impl.h
+D_HDRS=			illumetrics_provider.h
+
+D_SCR=			illumetrics_provider.d
 
 PLISTS:=		$(C_SRCS:%.c=%.plist)
 CSTYLES:=		$(C_SRCS:%.c=%.cstyle)
 C_OBJECTS:=		$(C_SRCS:%.c=%.o)
+
+D_OBJECTS:=		illumetrics_provider.o
 
 CSTYLE=			$(TOOLS)/cstyle.pl

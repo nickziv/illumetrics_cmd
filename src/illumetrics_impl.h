@@ -55,10 +55,12 @@
  * SmartOS, so we use libssl for fetching the repository.
  */
 
+#include "illumetrics_provider.h"
 #include <git2.h>
 #include <graph.h>
 #include <slablist.h>
 #include <time.h>
+#include <errno.h>
 
 /*
  * This is how we classify various repositories. All of these categories
