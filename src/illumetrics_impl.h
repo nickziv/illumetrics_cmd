@@ -100,7 +100,23 @@ typedef struct repo {
 	char *rp_url;
 	rep_type_t rp_type;
 	vcs_t rp_vcs;
+	int rp_curcom; /* current commit */
 } repo_t;
+
+/*
+ * This is an abstract representation of a commit. Allows us to support
+ * multiple repository formats and multiple backends (we can replace libgit2 if
+ * something better comes along). Currently doesn't contain the number of
+ * insertions and deletions corresponding to the files, but that metric doesn't
+ * appear too important anyway.
+ */
+typedef struct repo_commit {
+	char	*rc_author;
+	char	*rc_email;
+	char	**rc_files; /* files touched by commit */
+	int	rc_nfiles;
+} repo_commit_t;
+
 
 /*
  * Allocation function declarations.

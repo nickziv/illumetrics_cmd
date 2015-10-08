@@ -358,8 +358,46 @@ open_fds()
 }
 
 /*
- * Using libgit2, we update all of the repositories that we've loaded from the
- * list-files.
+ * Abstract Repository Functions
+ * =============================
+ *
+ * We define wrapper functions that wrap over the actual functions that read a
+ * repository format. Branching is done via a switch statement that switches on
+ * `rp_vcs` member of repo_t.
+ */
+
+/*
+ * Synchronizes on-disk repo with canonical remote repo.
+ */
+void
+repo_pull(repo_t *r)
+{
+	switch (r->rp_vcs) {
+
+	case GIT:
+		break;
+	}
+}
+
+/*
+ * Returns the next commit. We don't want to load all of the commits into
+ * memory, we just stream them, and add their information to the graphs,
+ * mentioned in `illumetrics_impl.h`.
+ */
+repo_commit_t *
+repo_get_next_commit(repo_t *r)
+{
+	switch (r->rp_vcs) {
+
+	case GIT:
+		break;
+	}
+}
+
+
+/*
+ * Using an abstract set of repository commands, we update all of the
+ * repositories that we've loaded from the list-files.
  */
 void
 update_all_repos()
