@@ -150,3 +150,4 @@ void ilm_rm_repo(repo_t *);
 void *ilm_mk_zbuf(size_t);
 void *ilm_mk_buf(size_t);
 void ilm_rm_buf(void *, size_t);
+int illumetrics_umem_init();

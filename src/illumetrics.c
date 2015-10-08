@@ -114,6 +114,7 @@ int
 main(int ac, char **av)
 {
 	ILLUMETRICS_GOT_HERE(__LINE__);
+	illumetrics_umem_init();
 	args_to_constraints(ac, av);
 	open_fds();
 	load_repositories();
@@ -273,22 +274,22 @@ copy_dir(char *dir, int fd)
 	struct dirent *de;
 	struct stat st;
 	while (1) {
+		int errno_old = errno;
 		de = readdir(ddir);
 		if (de == NULL) {
-			if (errno != 0) {
+			if (errno != errno_old) {
 				perror("copy_dir:readdir");
 				exit(-1);
 			}
 			break;
 		}
 		int cp_from = openat(dfd, de->d_name, O_RDONLY);
-		int fst = fstat(fd, &st);
+		int fst = fstat(cp_from, &st);
 		if (fst < 0) {
 			perror("copy_dir:fstat");
-			//printf("errno = %d\n", errno);
 			exit(-1);
 		}
-		int cp_to = openat(fd, de->d_name, O_RDWR | O_CREAT);
+		int cp_to = openat(fd, de->d_name, O_RDWR | O_CREAT, S_IRWXU);
 		void *buf = ilm_mk_buf(st.st_size);
 		if (buf == NULL) {
 			fprintf(stderr, "%s %s\n",
@@ -323,7 +324,7 @@ retry_list_fd_open:;
 		 * If the list files are missing we copy them from the prefix.
 		 */
 		if (fd < 0) {
-			copy_dir(PREFIX"config/lists", lists_fd);
+			copy_dir(PREFIX"config/lists/", lists_fd);
 			goto retry_list_fd_open;
 		}
 		char **urls = get_lines(fd, &lines);
@@ -406,6 +407,7 @@ open_fds()
 		exit(-1);
 	}
 
+	printf("Making illumetrics dir...\n");
 	int mkd = mkdirat(home_fd, ".illumetrics", S_IRWXU);
 	/* It's quite possible that users have an existing .illumetrics db */
 	if (mkd < 0 && errno != EEXIST) {
