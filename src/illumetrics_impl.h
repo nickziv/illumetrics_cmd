@@ -133,7 +133,7 @@ typedef enum arg {
  */
 typedef struct constraints {
 	char	*cn_author; /* name or email */
-	arg_t	*cn_arg; /* what's the first argument */
+	arg_t	cn_arg; /* what's the first argument */
 	repo_t	*cn_repo;
 	tm_t	cn_start_date;
 	tm_t	cn_end_date;

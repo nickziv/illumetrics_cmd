@@ -388,6 +388,14 @@ repo_pull(repo_t *r)
 
 	case GIT:
 		break;
+	case HG:
+		break;
+	case SVN:
+		break;
+	case CVS:
+		break;
+	case SCCS:
+		break;
 	}
 }
 
@@ -406,10 +414,42 @@ repo_get_next_commit(repo_t *r)
 	switch (r->rp_vcs) {
 
 	case GIT:
+		return (NULL);
+		break;
+	case HG:
+		return (NULL);
+		break;
+	case SVN:
+		return (NULL);
+		break;
+	case CVS:
+		return (NULL);
+		break;
+	case SCCS:
+		return (NULL);
 		break;
 	}
+	return (NULL);
 }
 
+
+/*
+ * This function is currently serial -- we pull repos one-by-one. Would be cool
+ * if we could parallelize this.
+ */
+
+selem_t
+pull_foldr(selem_t ignore, selem_t *e, uint64_t sz)
+{
+	repo_t *r = NULL;
+	uint64_t i = 0;
+	while (i < sz) {
+		r = e[i].sle_p;
+		repo_pull(r);
+		i++;
+	}
+	return (ignore);
+}
 
 /*
  * Using an abstract set of repository commands, we update all of the
@@ -418,7 +458,8 @@ repo_get_next_commit(repo_t *r)
 void
 update_all_repos()
 {
-
+	selem_t ignore;
+	(void)slablist_foldr(repos, pull_foldr, ignore);
 }
 
 /*
