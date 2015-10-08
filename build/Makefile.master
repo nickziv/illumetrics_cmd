@@ -7,6 +7,7 @@ CONFIG=			$(PWD)/../../config
 PREFIX=			/opt/illumetrics/
 SLPREFIX=		/opt/libslablist/
 GRPREFIX=		/opt/libgraph/
+GITPREFIX=		/opt/libgit2/
 
 
 
@@ -28,10 +29,12 @@ CINC=			-I /opt/libslablist/include\
 
 LDFLAGS_SL=		-R $(SLPREFIX)/lib/64:$(SLPREFIX)/lib 
 LDFLAGS_GR=		-R $(GRPREFIX)/lib/64:$(GRPREFIX)/lib
-LDFLAGS=		$(LDFLAGS_SL) $(LDFLAGS_GR)
+LDFLAGS_GIT=		-R $(GITPREFIX)/lib
+LDFLAGS=		$(LDFLAGS_SL) $(LDFLAGS_GR) $(LDFLAGS_GIT)
 
 LIBS=			-lc -L $(SLPREFIX)/lib/64 -lslablist\
-			-L $(GRPREFIX)/lib/64 -lgraph
+			-L $(GRPREFIX)/lib/64 -lgraph\
+			-L $(GITPREFIX)/lib -lgit2
 
 C_SRCS=			$(SRCDIR)/illumetrics_umem.c\
 			$(SRCDIR)/illumetrics.c

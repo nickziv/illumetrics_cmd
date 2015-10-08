@@ -6,9 +6,9 @@ executable.
 
 Run `make clean` to remove everything that was built.
 
-You may wish to change the `PREFIX`, `SLPREFIX`, and `GRPREFIX`. They define
-the install prefix for illumetrics, and the search prefixes for libslablist and
-libgraph.
+You may wish to change the `PREFIX`, `SLPREFIX`, `GRPREFIX`, and `GITPREFIX`.
+They define the install prefix for illumetrics, and the search prefixes for
+libslablist, libgraph, and libgit2.
 
 Status
 ======
