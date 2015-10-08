@@ -316,7 +316,7 @@ retry_list_fd_open:;
  * those directories create a directory for each `rep_type_t`. It is within
  * that heirarchy that we store repositories. We do this in order to mitigate
  * conflicts between two repos with the same name. The patron is represented by
- * a domain name like `joyent.com` or `omnios.com`.
+ * a domain name like `joyent.com` or `omniti.com`.
  * 
  * Before we do any calculation, we prime the sorage area which entails the
  * following: (a) we try to get all of the repositories up to date, which has the
