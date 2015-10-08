@@ -8,20 +8,36 @@ Run `make clean` to remove everything that was built.
 Status
 ======
 
+THIS CODE IS PRE-ALPHA QUALITY.
+
 Currently the code BUILDs. However it is still just a collection of stubs and
 ideas and doesn't do anything useful _at all_.
+
+THIS CODE IS PRE-ALPHA QUALITY.
 
 Hacking
 ========
 
-There are 2 files you need to care about:
+There are 3 files you need to care about:
 
 	src/illumetrics_impl.h
 	src/illumentrics.c
+	src/illumentrics_umem.c
 
 The first one defines the structs used, just like in an Illumos-like code base.
 
 The second one contains all of the code that does stuff.
+
+The third one contains abstract allocation routines for our structs. Do not use
+`malloc()` or anything else. Implement an abstract routine, or use
+`ilm_mk_buf()` and `ilm_rm_buf()`.
+
+To add new repositories for analysis modify one of the list files in:
+
+	config/lists
+
+And run `make install`, and then illumetrics to update your `~/.illumetrics`
+files.
 
 History
 =======
@@ -48,13 +64,15 @@ We use libgraph for handling some common graph operations. We have a few
 modified variants of the common DFS and BFS algorithms that appear to not exist
 anywhere else.
 
+Also depends on:
+
+	libgit2
+
 
 Problems
 =========
 
-So far this code doesn't run. Haven't tried to compile it yet. We should
-implement the `exec` make target. For example the `LDFLAGS` are not implemented
-yet, and the `LIBS` are probably wrong at worst and platform-specific at best.
-
-Use the `code` make target to get the raw C source code (which probably won't
-compile).
+A pretty detailed spec of the command line options is available in the comment
+above the main() function. This essentially describes what we want the code to
+do. The implementation isn't particularly fleshed out yet, but we want to use
+the libgraph to compute things like author aliases, centrality, and so forth.
