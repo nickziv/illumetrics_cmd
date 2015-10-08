@@ -120,12 +120,20 @@ typedef struct repo_commit {
 	tm_t	rc_time; /* exact time of commit */
 } repo_commit_t;
 
+typedef enum arg {
+	PULL,
+	AUTHOR,
+	ALIASES,
+	CENTRALITY
+} arg_t;
+
 /*
  * These are global constraints on the program. They correspond to the command
  * line parameters described in the comment above main() in illumetrics.c.
  */
 typedef struct constraints {
 	char	*cn_author; /* name or email */
+	arg_t	*cn_arg; /* what's the first argument */
 	repo_t	*cn_repo;
 	tm_t	cn_start_date;
 	tm_t	cn_end_date;

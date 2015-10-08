@@ -92,10 +92,33 @@ void construct_graphs();
  *			//centrality value to use
  *
  */
+void
+args_to_constraints(int ac, char **av)
+{
+	if (!strcmp(av[1], "pull")) {
+		constraints.cn_arg = PULL;
+	} else if (!strcmp(av[1], "author")) {
+		constraints.cn_arg = AUTHOR;
+	} else if (!strcmp(av[1], "aliases")) {
+		constraints.cn_arg = ALIASES;
+	} else if (!strcmp(av[1], "centrality")) {
+		constraints.cn_arg = CENTRALITY;
+	}
+}
+void open_fds();
+void load_repositories();
+void update_all_repos();
+void purge_unrecognized_repos();
 int
 main(int ac, char **av)
 {
-	prime_storage_area();
+	args_to_constraints(ac, av);
+	open_fds();
+	load_repositories();
+	if (constraints.cn_arg == PULL) {
+		update_all_repos();
+	}
+	purge_unrecognized_repos();
 	construct_graphs();
 	return (0);
 }
@@ -258,6 +281,10 @@ copy_dir(char *dir, int fd)
 	close(dfd);
 }
 
+/*
+ * This function essentially goes through the list-files and fills out the
+ * repos slablist.
+ */
 void
 load_repositories()
 {
@@ -320,25 +347,8 @@ retry_list_fd_open:;
  * conflicts between two repos with the same name. The patron is represented by
  * a domain name like `joyent.com` or `omniti.com`.
  * 
- * Before we do any calculation, we prime the sorage area which entails the
- * following: (a) we try to get all of the repositories up to date, which has the
- * side effect of forcing us fetch any new repositories that were added to the
- * program; (b) we also purge any repositories that are removed from this program,
- * by doing a relative complement on the two sets.
  */
-void open_fds();
-void load_repositories();
-void update_all_repos();
-void purge_unrecognized_repos();
 
-void
-prime_storage_area()
-{
-	open_fds();
-	load_repositories();
-	update_all_repos();
-	purge_unrecognized_repos();
-}
 
 
 /*
@@ -412,8 +422,8 @@ update_all_repos()
 }
 
 /*
- * Once we've update all of the repositories we've recognized, we purge the ones
- * that are on disk but not in memory.
+ * Once we've loaded the repo_t slablist, we scan the `stor` directory and
+ * remove any repositories that are not in the slablist.
  */
 void
 purge_unrecognized_repos()
