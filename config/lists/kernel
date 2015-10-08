@@ -1,0 +1,6 @@
+git://github.com/illumos/illumos-gate.git
+git://github.com/joyent/illumos-joyent.git
+git://github.com/delphix/delphix-os.git
+git://github.com/Nexenta/illumos-nexenta.git
+git://github.com/omniti-labs/illumos-omnios.git
+git://github.com/gdamore/illumos-core.git

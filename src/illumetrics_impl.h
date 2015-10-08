@@ -67,13 +67,28 @@ typedef enum rep_type {
 	VIRTUALIZATION
 } rep_type_t;
 
+typedef enum vcs {
+	GIT,
+	HG,
+	SVN,
+	CVS,
+	SCCS
+} vcs_t;
+
 /*
- * The repository structure used by Illumetrics is
- * essentially metadata. It contains a link to the git repository, and a type that
- * classifies the repository. We use this structure to fetch the actual
- * repositories from the internet.
+ * The repository structure used by Illumetrics is essentially metadata. It
+ * contains a link to the git repository, and a type that classifies the
+ * repository. We use this structure to fetch the actual repositories from the
+ * internet.
  */
 typedef struct repo {
 	char *rp_url;
 	rep_type_t rp_type;
+	vcs_t rp_vcs;
 } repo_t;
+
+repo_t *ilm_mk_repo();
+void ilm_rm_repo(repo_t *);
+void *ilm_mk_zbuf(size_t);
+void *ilm_mk_buf(size_t);
+void ilm_rm_buf(void *, size_t);

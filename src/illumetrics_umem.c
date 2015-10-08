@@ -54,7 +54,7 @@ illumetrics_umem_init()
 }
 
 repo_t *
-mk_repo()
+ilm_mk_repo()
 {
 #ifdef UMEM
 	return (umem_cache_alloc(cache_repo, UMEM_NOFAIL));
@@ -64,7 +64,7 @@ mk_repo()
 }
 
 void
-rm_repo(repo_t *r)
+ilm_rm_repo(repo_t *r)
 {
 #ifdef UMEM
 	bzero(r, sizeof (repo_t));
@@ -72,5 +72,35 @@ rm_repo(repo_t *r)
 #else
 	bzero(r, sizeof (repo_t));
 	free(r);
+#endif
+}
+
+void *
+ilm_mk_buf(size_t sz)
+{
+#ifdef UMEM
+	return (umem_alloc(sz, UMEM_NOFAIL));
+#else
+	return (malloc(sz));
+#endif
+}
+
+void *
+ilm_mk_zbuf(size_t sz)
+{
+#ifdef UMEM
+	return (umem_zalloc(sz, UMEM_NOFAIL));
+#else
+	return (calloc(1, sz));
+#endif
+}
+
+void
+ilm_rm_buf(void *s, size_t sz)
+{
+#ifdef UMEM
+	umem_free(s, sz);
+#else
+	free(s);
 #endif
 }
