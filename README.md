@@ -1,9 +1,14 @@
 Building
 ========
 
-Go to `build/illumos` directory and run `make illumetrics` to get the executable.
+Go to `build/illumos` directory and run `make illumetrics` to get the
+executable.
 
 Run `make clean` to remove everything that was built.
+
+You may wish to change the `PREFIX`, `SLPREFIX`, and `GRPREFIX`. They define
+the install prefix for illumetrics, and the search prefixes for libslablist and
+libgraph.
 
 Status
 ======
