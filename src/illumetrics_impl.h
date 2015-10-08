@@ -58,6 +58,7 @@
 #include <git2.h>
 #include <graph.h>
 #include <slablist.h>
+#include <time.h>
 
 /*
  * This is how we classify various repositories. All of these categories
@@ -103,6 +104,7 @@ typedef struct repo {
 	int rp_curcom; /* current commit */
 } repo_t;
 
+typedef struct tm tm_t;
 /*
  * This is an abstract representation of a commit. Allows us to support
  * multiple repository formats and multiple backends (we can replace libgit2 if
@@ -115,6 +117,7 @@ typedef struct repo_commit {
 	char	*rc_email;
 	char	**rc_files; /* files touched by commit */
 	int	rc_nfiles;
+	tm_t	rc_time; /* exact time of commit */
 } repo_commit_t;
 
 
