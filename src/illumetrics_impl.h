@@ -34,7 +34,7 @@
  * two seemingly different authors are in fact the same one, since only one
  * author can own an email.
  * 
- * -An undirected graph of author $\<->$ alias edges. Sometimes authors use
+ * -An undirected graph of author <-> alias edges. Sometimes authors use
  * variations of their names, such as omitting the middle initial. We want to
  * create a graph of author-names to aliases (we arbitrarily choose a canonical
  * author name). This is meant to catch anything the previous graph didn't
@@ -67,6 +67,12 @@ typedef enum rep_type {
 	VIRTUALIZATION
 } rep_type_t;
 
+/*
+ * We abstract away the repository operations such as getting the history and
+ * commit-details, since we may want to do computations on non-git
+ * repositories. In order to know which set of function calls to wrap around,
+ * need the following enum.
+ */
 typedef enum vcs {
 	GIT,
 	HG,
@@ -87,6 +93,9 @@ typedef struct repo {
 	vcs_t rp_vcs;
 } repo_t;
 
+/*
+ * Allocation function declarations.
+ */
 repo_t *ilm_mk_repo();
 void ilm_rm_repo(repo_t *);
 void *ilm_mk_zbuf(size_t);

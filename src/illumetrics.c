@@ -370,11 +370,10 @@ purge_unrecognized_repos()
 
 
 /*
- * Graph Construction. So we've gone over which graphs we want to construct, at
- * the beginning of this program. Now we want to actually construct this graph. We
+ * Graph Construction. So we've gone over which graphs we want to construct, in
+ * `illumetrics_impl.h`. Now we want to actually construct this graph. We
  * basically construct the graphs... 
  */
-
 void
 construct_graphs()
 {
