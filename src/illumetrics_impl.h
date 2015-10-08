@@ -120,6 +120,17 @@ typedef struct repo_commit {
 	tm_t	rc_time; /* exact time of commit */
 } repo_commit_t;
 
+/*
+ * These are global constraints on the program. They correspond to the command
+ * line parameters described in the comment above main() in illumetrics.c.
+ */
+typedef struct constraints {
+	char	*cn_author; /* name or email */
+	repo_t	*cn_repo;
+	tm_t	cn_start_date;
+	tm_t	cn_end_date;
+} constraints_t;
+
 
 /*
  * Allocation function declarations.

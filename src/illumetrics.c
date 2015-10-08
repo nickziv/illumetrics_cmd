@@ -46,6 +46,8 @@ rep_type_t repo_types[REPO_LS_PATHS] = {BUILD_SYSTEM, DISTRIBUTED_STORAGE,
 	DOCUMENTATION, COMPILER, KERNEL, USERLAND, ORCHESTRATION,
 	VIRTUALIZATION};
 slablist_t *repos;
+/* See constraints_t struct in illumetrics_impl.h */
+constraints_t constraints;
 
 /* forward declarations */
 void prime_storage_area();
