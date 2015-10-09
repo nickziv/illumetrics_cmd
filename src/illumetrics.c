@@ -30,6 +30,7 @@
 uid_t uid;
 struct passwd *pwd;
 char *home;
+char init_cwd[PATH_MAX];
 int home_fd;
 int illumetrics_fd;
 int stor_fd;
@@ -50,7 +51,6 @@ slablist_t *repos;
 constraints_t constraints;
 
 /* forward declarations */
-void prime_storage_area();
 void construct_graphs();
 
 /*
@@ -119,7 +119,9 @@ main(int ac, char **av)
 	open_fds();
 	load_repositories();
 	if (constraints.cn_arg == PULL) {
+		printf("Pulling in all repos...\n");
 		update_all_repos();
+		printf("Done.\n");
 	}
 	purge_unrecognized_repos();
 	construct_graphs();
@@ -199,7 +201,11 @@ char **
 get_lines(int fd, int *lns)
 {
 	struct stat st;
-	fstat(fd, &st);
+	int fs = fstat(fd, &st);
+	if (fs < 0) {
+		perror("get_line:fstat");
+		exit(-1);
+	}
 	char *buf = ilm_mk_buf(st.st_size);
 	atomic_read(fd, buf, st.st_size);
 	size_t nlines = 0;
@@ -231,6 +237,81 @@ get_lines(int fd, int *lns)
 }
 
 /*
+ * Given a repo_t, we use its URL to determine what the owner's username is and
+ * what the repository's name is. We can use this data to determine where in
+ * the storage area we will/did clone the repo into. This function checks to
+ * see if it recognized the domain name. If the domain name is not recognized,
+ * we bail. This is becuase we want to make sure that we properly extract the
+ * username and repository-name from the URL.
+ *
+ * We assume that the username corresponds to the patron-name. For example
+ * 'joyent'. This isn't a particularly good assumption to make, but it is
+ * expedient. If this becomes a problem we should create a mapping between
+ * usernames and patrons. A patron, btw, is essentially any commercial entity
+ * that contributes code to illumos (or related projects), or funds code
+ * contributions to illumos (or related projects).
+ */
+void
+repo_derive_url(repo_t *r)
+{
+	char *url = r->rp_url;
+	int cmp = strncmp(url, "git://github.com/", 17);
+	char username[FILENAME_MAX];
+	int ulen = 0;
+	char reponame[FILENAME_MAX];
+	int rlen = 0;
+	bzero(username, FILENAME_MAX);
+	bzero(reponame, FILENAME_MAX);
+	if (!cmp) {
+		/*
+		 * This is the slash ('/') that divides the username from the
+		 * repo name.
+		 */
+		char *slash = strchr(url + 17, '/');
+		/*
+		 * This is the dot ('.') that divides the repo name from the
+		 * file extention (.git).
+		 */
+		char *dot = strchr(url + 17, '.');
+		if (slash == NULL) {
+			fprintf(stderr,
+			    "URL %s doesn't contain a slash (/).\n",
+			    url);
+			exit(-1);
+		}
+		if (dot == NULL) {
+			fprintf(stderr,
+			    "URL %s doesn't contain a '.git' suffix.\n",
+			    url);
+			exit(-1);
+		}
+		char *cur = url + 17; /* cursor */
+		int i = 0;
+		while (cur != slash) {
+			username[i] = *cur;
+			i++;
+			cur++;
+		}
+		ulen = i;
+		cur++; /* jump over the slash */
+		i = 0;
+		while (cur != dot) {
+			//crash here
+			reponame[i] = *cur;
+			i++;
+			cur++;
+		}
+		rlen = i;
+		char *owner = ilm_mk_zbuf(ulen + 1);
+		char *name = ilm_mk_zbuf(rlen + 1);
+		bcopy(username, owner, ulen);
+		bcopy(reponame, name, rlen);
+		r->rp_owner = owner;
+		r->rp_name = name;
+	}
+}
+
+/*
  * We use the URL to determine the VCS type. We are given the repo_type.
  */
 repo_t *
@@ -247,10 +328,12 @@ url_to_repo(char *url, rep_type_t rt)
 	int cmp = strncmp(url, "git://", 6);
 	if (!cmp) {
 		r->rp_vcs = GIT;
+		repo_derive_url(r);
 		return (r);
 	}
 	return (NULL);
 }
+
 
 /*
  * This function copies the `dir` and its contents into the directory pointed
@@ -370,7 +453,7 @@ retry_list_fd_open:;
  * those directories create a directory for each `rep_type_t`. It is within
  * that heirarchy that we store repositories. We do this in order to mitigate
  * conflicts between two repos with the same name. The patron is represented by
- * a domain name like `joyent.com` or `omniti.com`.
+ * a recognizable name like `joyent` or `omniti`.
  * 
  */
 
@@ -382,8 +465,7 @@ retry_list_fd_open:;
 void
 open_fds()
 {
-	char cwd[PATH_MAX];
-	char *cwdret = getcwd(cwd, PATH_MAX);
+	char *cwdret = getcwd(init_cwd, PATH_MAX);
 	if (cwdret == NULL) {
 		perror("open_fds:getcwd");
 		exit(-1);
@@ -407,7 +489,6 @@ open_fds()
 		exit(-1);
 	}
 
-	printf("Making illumetrics dir...\n");
 	int mkd = mkdirat(home_fd, ".illumetrics", S_IRWXU);
 	/* It's quite possible that users have an existing .illumetrics db */
 	if (mkd < 0 && errno != EEXIST) {
@@ -462,12 +543,14 @@ open_fds()
 		exit(-1);
 	}
 	/* we change back to our original cwd */
-	ch = chdir(cwd);
+	ch = chdir(init_cwd);
 	if (ch < 0) {
 		perror("open_fds:chdir:$OLDCWD");
 		exit(-1);
 	}
 }
+
+
 
 /*
  * Abstract Repository Functions
@@ -478,17 +561,97 @@ open_fds()
  * `rp_vcs` member of repo_t.
  */
 
+
+/* handles libgit2 errors */
+void
+handle_git_error(int error)
+{
+	const git_error *e = giterr_last();
+	printf("Error %d/%d: %s\n", error, e->klass, e->message);
+	exit(error);
+}
+
 /*
- * Synchronizes on-disk repo with canonical remote repo.
+ * Synchronizes on-disk repo with canonical remote repo. If there is no on-disk
+ * repo, we clone one into the expected location.
  */
 void
 repo_pull(repo_t *r)
 {
+	int clone = 1; /* we try to clone by default */
+	int mkd = mkdirat(stor_fd, r->rp_owner, S_IRWXU);
+	if (mkd < 0 && errno != EEXIST) {
+		perror("repo_pull:mkdirat:stor/owner");
+		exit(-1);
+	}
+	fchdir(stor_fd);
+	DIR *owner_dir = opendir(r->rp_owner);
+	if (owner_dir == NULL) {
+		perror("repo_pull:opendir:stor/owner");
+		exit(-1);
+	}
+	int owner_fd = dirfd(owner_dir);
+	if (owner_fd) {
+		perror("repo_pull:dirfd:stor/owner");
+		exit(-1);
+	}
+	mkd = mkdirat(owner_fd, r->rp_name, S_IRWXU);
+	if (mkd < 0 && errno != EEXIST) {
+		perror("repo_pull:mkdirat:stor/owner");
+		exit(-1);
+	} else if (mkd < 0 && errno == EEXIST) {
+		/* but we try to fetch/pull if dir exists */
+		clone = 0;
+	}
+
+	/*
+	 * We now get the full pathname  of the repo, by cd'ing into it and
+	 * getting the cwd. Some libraries (like libgit2) accept pathnames
+	 * instead of file descriptors.
+	 */
+	fchdir(owner_fd);
+	chdir(r->rp_name);
+	char repo_path[PATH_MAX];
+	bzero(repo_path, PATH_MAX);
+	char *cwd_ret = getcwd(repo_path, PATH_MAX);
+	if (cwd_ret == NULL) {
+		perror("repo_pull:getcwd");
+		exit(-1);
+	}
+	int error;
+	/* git structure declarations */
+	git_repository_t *gr = NULL;
+	git_remote_t *grem = NULL;
+
 	switch (r->rp_vcs) {
 
 	case GIT:
-		fprintf(stderr, "Pull not supported on Git repositories.\n");
-		fprintf(stderr, "Skipping repository %s.\n", r->rp_url);
+
+		if (clone) {
+			error = git_clone(&gr, r->rp_url, repo_path, NULL);
+			if (error < 0) {
+				handle_git_error(error);
+			}
+		} else {
+			error = git_repository_open(&gr, repo_path);
+			if (error < 0) {
+				handle_git_error(error);
+			}
+			error = git_remote_lookup(&grem, gr, "origin");
+			if (error < 0) {
+				handle_git_error(error);
+			}
+			/*
+			 * XXX the libgit2 interfaces keep changing, so this
+			 * function has an extra arg in newer version of
+			 * libgit2. I never thought that the github guys were
+			 * such amatuers.
+			 */
+			error = git_remote_fetch(grem, NULL, NULL);
+			if (error < 0) {
+				handle_git_error(error);
+			}
+		}
 		break;
 	case HG:
 		fprintf(stderr, "Pull not supported on Mercurial repositories.\n");

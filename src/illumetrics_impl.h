@@ -101,12 +101,16 @@ typedef enum vcs {
  */
 typedef struct repo {
 	char *rp_url;
+	char *rp_owner; /* the username of the patron (i.e. joyent, omniti) */
+	char *rp_name;
 	rep_type_t rp_type;
 	vcs_t rp_vcs;
 	int rp_curcom; /* current commit */
 } repo_t;
 
 typedef struct tm tm_t;
+typedef struct git_repository git_repository_t;
+typedef struct git_remote git_remote_t;
 /*
  * This is an abstract representation of a commit. Allows us to support
  * multiple repository formats and multiple backends (we can replace libgit2 if
