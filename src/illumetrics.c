@@ -817,8 +817,10 @@ purge_unrecognized_repos()
 
 /*
  * Graph Construction. So we've gone over which graphs we want to construct, in
- * `illumetrics_impl.h`. Now we want to actually construct this graph. We
- * basically construct the graphs... 
+ * `illumetrics_impl.h`. Now we want to actually construct these graphs. What
+ * we essentially do is go over the stream of commits using
+ * `repo_get_next_commit`, and add to each graph using the information in each
+ * commit.
  */
 void
 construct_graphs()
