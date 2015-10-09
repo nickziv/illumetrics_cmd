@@ -31,6 +31,7 @@ uid_t uid;
 struct passwd *pwd;
 char *home;
 char init_cwd[PATH_MAX];
+char *illumetrics_stor;
 int home_fd;
 int illumetrics_fd;
 int stor_fd;
@@ -272,9 +273,17 @@ repo_derive_url(repo_t *r)
 		char *slash = strchr(url + 17, '/');
 		/*
 		 * This is the dot ('.') that divides the repo name from the
-		 * file extention (.git).
+		 * file extention (.git). We would use strchr, but a repo name
+		 * can contain more than one dot.
 		 */
-		char *dot = strchr(url + 17, '.');
+		char *dot = slash;
+		while (*dot != '\0') {
+			dot++;
+		}
+		dot--;
+		while (*dot != '.') {
+			dot--;
+		}
 		if (slash == NULL) {
 			fprintf(stderr,
 			    "URL %s doesn't contain a slash (/).\n",
@@ -523,7 +532,13 @@ open_fds()
 		perror("open_fds:fchdir:illumetrics_fd");
 		exit(-1);
 	}
-	DIR *stor_dir = opendir("stor");
+	illumetrics_stor = getenv("ILLUMETRICS_STOR");
+	DIR *stor_dir;
+	if (illumetrics_stor == NULL) {
+		stor_dir = opendir("stor");
+	} else {
+		stor_dir = opendir(illumetrics_stor);
+	}
 	if (stor_dir == NULL) {
 		perror("open_fds:opendir:stor");
 		exit(-1);

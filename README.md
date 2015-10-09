@@ -24,6 +24,16 @@ You may wish to change the `PREFIX`, `SLPREFIX`, `GRPREFIX`, and `GITPREFIX`.
 They define the install prefix for illumetrics, and the search prefixes for
 libslablist, libgraph, and libgit2.
 
+Installing
+==========
+
+To install, run `make/install` after you've built the code. By default, we
+store all of our stuff in the ~/.illumetrics directory. The repositories and
+calculations are stored in ~/.illumetrics/stor/. However, you may not want to
+keep all of that data in your home directory. You can specify an alterative
+root for the stor/ directory, by specifying the environment variable
+`ILLUMETRICS_STOR`.
+
 Status
 ======
 
