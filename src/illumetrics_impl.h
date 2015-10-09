@@ -116,7 +116,9 @@ typedef struct git_remote git_remote_t;
  * multiple repository formats and multiple backends (we can replace libgit2 if
  * something better comes along). Currently doesn't contain the number of
  * insertions and deletions corresponding to the files, but that metric doesn't
- * appear too important anyway.
+ * appear too important anyway. Furthermore, we don't include the commit
+ * message. This could be useful in the future, but at the moment is not
+ * needed. Besides, we want to use as little memory per commit as possible.
  */
 typedef struct repo_commit {
 	char	*rc_author;
