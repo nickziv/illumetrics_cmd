@@ -307,7 +307,6 @@ repo_derive_url(repo_t *r)
 		cur++; /* jump over the slash */
 		i = 0;
 		while (cur != dot) {
-			//crash here
 			reponame[i] = *cur;
 			i++;
 			cur++;
