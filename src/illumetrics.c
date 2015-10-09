@@ -54,6 +54,19 @@ constraints_t constraints;
 /* forward declarations */
 void construct_graphs();
 
+qwork_t
+str2qwork(char *s)
+{
+	if (!strcmp(s, "commit")) {
+		return (QW_COMMIT);
+	} else if (!strcmp(s, "file")) {
+		return (QW_FILE);
+	} else if (!strcmp(s, "line")) {
+		return (QW_LINE);
+	}
+	return (QW_WTF);
+}
+
 /*
  * illumetrics <argument> <parameters>
  *
@@ -61,6 +74,8 @@ void construct_graphs();
  *
  * 	pull - pulls all repos in the lists
  *	aliases - outputs probable aliases based on emails
+ *		-D <date>[,<date>]
+ *			//restrict calculations to date or daterange
  *	author - given an author's name or email, we can drill down into
  *	    specifics
  *		-a <name | email>
@@ -89,13 +104,26 @@ void construct_graphs();
  *			//neighboring authors to author specified in `-a`,
  *			limited by the distance/number-of-hops specified in
  *			`-d`.
+ *		-D <date>[,<date>]
  *		-c <degree | closeness | betweeness>
  *			//centrality value to use
+ *
+ *	repository - do repository centric calculations
+ *		-l //lists all repos
+ *		-D <date>[,<date>]
+ *		-w [commit | file | line]
+ *		-n <NUMBER>
+ *			//top NUMBER contributors by amount of work done
  *
  */
 void
 args_to_constraints(int ac, char **av)
 {
+	/*
+	 * Currently we can use the same getopt loop for all of the verbs. But
+	 * if the parameters start to overlap, we'll have to start branching
+	 * out.
+	 */
 	(void)ac;
 	if (!strcmp(av[1], "pull")) {
 		constraints.cn_arg = PULL;
@@ -105,6 +133,27 @@ args_to_constraints(int ac, char **av)
 		constraints.cn_arg = ALIASES;
 	} else if (!strcmp(av[1], "centrality")) {
 		constraints.cn_arg = CENTRALITY;
+	} else if (!strcmp(av[1], "repository")) {
+		constraints.cn_arg = REPOSITORY;
+	}
+	int c;
+	while ((c = getopt(ac - 1, av+1, "a:w:r:f:D:hn:d:c:")) != -1) {
+		switch (c) {
+
+		case 'a':
+			constraints.cn_author = optarg;
+			break;
+		case 'w':
+			constraints.cn_qwork = str2qwork(optarg);
+			if (constraints.cn_qwork == QW_WTF) {
+				fprintf(stderr, "%s %s %s\n", optarg,
+				    "isn't a valid input",
+				    "for parameter '-w'.\n");
+			}
+			break;
+		case 'r':
+			break;
+		}
 	}
 }
 void open_fds();

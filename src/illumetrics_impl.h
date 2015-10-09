@@ -132,8 +132,20 @@ typedef enum arg {
 	PULL,
 	AUTHOR,
 	ALIASES,
-	CENTRALITY
+	CENTRALITY,
+	REPOSITORY
 } arg_t;
+
+/*
+ * What we should treat as the quantum of work for an author, for the run of
+ * this program.
+ */
+typedef enum qwork {
+	QW_COMMIT,
+	QW_FILE,
+	QW_LINE,
+	QW_WTF
+} qwork_t;
 
 /*
  * These are global constraints on the program. They correspond to the command
@@ -143,8 +155,12 @@ typedef struct constraints {
 	char	*cn_author; /* name or email */
 	arg_t	cn_arg; /* what's the first argument */
 	repo_t	*cn_repo;
+	char	*cn_subtree;
+	int	cn_num;
 	tm_t	cn_start_date;
 	tm_t	cn_end_date;
+	qwork_t	cn_qwork;
+	int	cn_list; /* bool */
 } constraints_t;
 
 
