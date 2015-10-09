@@ -1,3 +1,17 @@
+DISCLAIMER
+==========
+
+THIS SOFTWARE IS HARDLY TESTED AND IS UNDER HEAVY DEVELOPMENT.
+
+UNSUPERVISED EXPOSURE CAN RESULT IN:
+
+ - stroke
+ - brain-cancer
+ - cardiac arythmia
+ - sterility
+ - miscairage
+ - bubonic plague
+
 Building
 ========
 
