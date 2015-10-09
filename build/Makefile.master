@@ -34,7 +34,8 @@ LDFLAGS=		$(LDFLAGS_SL) $(LDFLAGS_GR) $(LDFLAGS_GIT)
 
 LIBS=			-lc -L $(SLPREFIX)/lib/64 -lslablist\
 			-L $(GRPREFIX)/lib/64 -lgraph\
-			-L $(GITPREFIX)/lib -lgit2
+			-L $(GITPREFIX)/lib -lgit2\
+			-lssl -lssh2 -lpthread
 
 C_SRCS=			$(SRCDIR)/illumetrics_umem.c\
 			$(SRCDIR)/illumetrics.c

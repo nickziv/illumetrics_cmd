@@ -115,6 +115,7 @@ main(int ac, char **av)
 {
 	ILLUMETRICS_GOT_HERE(__LINE__);
 	illumetrics_umem_init();
+	git_libgit2_init();
 	args_to_constraints(ac, av);
 	open_fds();
 	load_repositories();
@@ -125,6 +126,7 @@ main(int ac, char **av)
 	}
 	purge_unrecognized_repos();
 	construct_graphs();
+	git_libgit2_shutdown();
 	return (0);
 }
 
@@ -591,7 +593,7 @@ repo_pull(repo_t *r)
 		exit(-1);
 	}
 	int owner_fd = dirfd(owner_dir);
-	if (owner_fd) {
+	if (owner_fd < 0) {
 		perror("repo_pull:dirfd:stor/owner");
 		exit(-1);
 	}
@@ -622,13 +624,14 @@ repo_pull(repo_t *r)
 	/* git structure declarations */
 	git_repository_t *gr = NULL;
 	git_remote_t *grem = NULL;
+	git_clone_options gopts = GIT_CLONE_OPTIONS_INIT;
 
 	switch (r->rp_vcs) {
 
 	case GIT:
 
 		if (clone) {
-			error = git_clone(&gr, r->rp_url, repo_path, NULL);
+			error = git_clone(&gr, r->rp_url, repo_path, &gopts);
 			if (error < 0) {
 				handle_git_error(error);
 			}
