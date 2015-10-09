@@ -631,10 +631,12 @@ repo_pull(repo_t *r)
 	case GIT:
 
 		if (clone) {
+			printf("Cloning into %s...\n", repo_path);
 			error = git_clone(&gr, r->rp_url, repo_path, &gopts);
 			if (error < 0) {
 				handle_git_error(error);
 			}
+			printf("Finished cloning into %s...\n", repo_path);
 		} else {
 			error = git_repository_open(&gr, repo_path);
 			if (error < 0) {
@@ -650,10 +652,12 @@ repo_pull(repo_t *r)
 			 * libgit2. I never thought that the github guys were
 			 * such amatuers.
 			 */
+			printf("Pulling into %s...\n", repo_path);
 			error = git_remote_fetch(grem, NULL, NULL);
 			if (error < 0) {
 				handle_git_error(error);
 			}
+			printf("Finished pulling into %s...\n", repo_path);
 		}
 		break;
 	case HG:
