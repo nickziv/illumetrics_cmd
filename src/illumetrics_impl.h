@@ -24,11 +24,10 @@
  * data using graph operations. First let's enumerate the intra-repository
  * graphs.
  *  
- * -An undirected graph of file-modification <-> author edges.
+ * -A directed graph of file-modification -> author edges.
  * 
  * -An undirected graph of file-modification <-> commit edges.
  * 
- * -An undirected graph of commit <-> author edges.
  * 
  * And now the inter-repository graphs:
  * 
@@ -53,6 +52,67 @@
  * repositories. We do this through the |libgit2| C library made by the folks
  * at github. Unfortunately, I couldn't get it to link against libssh2 on
  * SmartOS, so we use libssl for fetching the repository.
+ *
+ * Centrality Calculations:
+ * ========================
+ *
+ * Most methods of calculating how signinficant or central an author is to a
+ * rpject center around counting the raw number of commits made. This is a good
+ * start for guaging how much work got done, but that doesn't tell the whole
+ * story. It just tells us that a particular author commits a lot of code.
+ *
+ * But what we would like to know in addition to that is how central an author
+ * is to a project. That is, if an author were to get hit by a bus, how many
+ * contributors would take notice.
+ *
+ * This is called a centrality value, and there are a few kinds of centrality.
+ * For now, we focus on the three most basic kinds of centrality:
+ *
+ *  - Degree Centrality: How many other authors is a single author connected
+ *  to.
+ *
+ *  - Betweeness Centrality: How many authors have to use this author as a
+ *  go-between to get to another author.
+ *
+ *  - Closeness Centrality: How close is this author to every other author.
+ *
+ * There are some other intereasting centrality measures, that we may implement
+ * in the future.
+ *
+ * This information can be illuminating, however there is a problem. We don't
+ * know what the direct connections between authors are, from the commit logs
+ * alone. Even though we could inlcude external data, like mailing list data
+ * and twitter data, and so forth, we would like to use the logs as much as
+ * possible.
+ *
+ * It turns out however, that somebody was thinking about this essential
+ * problem, around thirty or forty years ago. The author -- who's name escapes
+ * me at the moment -- wrote a paper called the "Duality of Persons and
+ * Groups". Essentially, it uses the presence of group-membership information
+ * to estimate the closeness between people. It uses meta-data to estimate real
+ * data.
+ *
+ * It essentially developed a method for transforming a graph of group <->
+ * person into a graph of person <-> person and a graph of group <-> group. We
+ * do essentially the same thing, except that we have a directed graph of
+ * file-modification -> person. Our implemenetation differs a bit since we use
+ * a slablist-backed graph of edges to represent a graph via libgraph, while
+ * the author used an adjacency matrix approach. Our method is faster since our
+ * complexity is a function of the number of edges, whereas the matrix-multiply
+ * method is a function of the number of nodes squared (or the number of
+ * possible edges which is larger than the number of actual edges).
+ *
+ * The commit log not only contains which files an author modified, but also
+ * how much and _when_. We can use intensity of modification and temporal
+ * distance between modifications when building the graphs.
+ *
+ * The resulting graph isn't necessarily a graph of _communication_ between
+ * authors. For all we know the two authors may never have even met. However it
+ * is a graph of authors who may be connected by common knowledge or common
+ * familiarity of certain parts of the code base. This works when localized to
+ * a single repository, but can also be applied to a set of repositories. Which
+ * is conceptually no different from copying a set of repositories into a
+ * common directory, and coalescing all of the commit logs.
  */
 
 #include "illumetrics_provider.h"
