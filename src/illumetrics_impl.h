@@ -50,8 +50,7 @@
  *
  * -To build up these graphs we access the commit logs of the various
  * repositories. We do this through the |libgit2| C library made by the folks
- * at github. Unfortunately, I couldn't get it to link against libssh2 on
- * SmartOS, so we use libssl for fetching the repository.
+ * at github.
  *
  * Centrality Calculations:
  * ========================
