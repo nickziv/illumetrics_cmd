@@ -52,10 +52,10 @@ slablist_t *repos;
 constraints_t constraints;
 
 /* the global graphs */
-lg_graph_t *author2email;
+lg_graph_t *email2author;
 lg_graph_t *author2commit;
-lg_graph_t *author2file;
-lg_graph_t *commit2file;
+lg_graph_t *file2author;
+lg_graph_t *file2commit;
 
 /* forward declarations */
 void construct_graphs();
@@ -888,8 +888,48 @@ build_graphs_foldr(selem_t ignored, selem_t *e, uint64_t sz)
 		repo_t *r = e[i].sle_p;
 		repo_commit_t *c = repo_get_next_commit(r);
 		/* We add an email -> author edge */
+		gelem_t author;
+		gelem_t email;
+		author.ge_p = c->rc_author;
+		email.ge_p = c->rc_email;
+		lg_connect(email2author, email, author);
 		/* We add a author -> commit edge */
+		gelem_t commit;
+		commit.ge_p = c->rc_sha1;
 		/* We add a file-mod -> commit edge */
+		int j = 0;
+		gelem_t file;
+		/*
+		 * XXX Do we want to include absolute paths to single files
+		 * only? Or do we want to break up the path into super paths?
+		 * For example say we modify foo/bar/qwe/asd.
+		 *
+		 * We can either do:
+		 *	foo/bar/qwe/asd -> author
+		 * or:
+		 *	foo/bar/qwe/asd -> author
+		 *	foo/bar/qwe-> author
+		 *	foo/bar/ -> author
+		 *	foo/ -> author
+		 *
+		 * The former is more compact, and we know that every
+		 * source-component of the edge is a file (and not _maybe_ a
+		 * directory). We can also derive the latter from the former
+		 * should the need arise.
+		 *
+		 * In fact we want 2 graphs:
+		 *	- A graph with file mods
+		 *	- A graph with directory mods
+		 * This way there is no ambiguity.
+		 *
+		 * TODO: Everything I just wrote above.
+		 */
+		while (j < c->rc_nfiles) {
+			file.ge_p = c->rc_files[j];
+			lg_connect(file2commit, file, commit);
+			lg_connect(file2author, file, author);
+			j++;
+		}
 		/* We add a file-mod -> author edge */
 		i++;
 	}
@@ -899,10 +939,10 @@ build_graphs_foldr(selem_t ignored, selem_t *e, uint64_t sz)
 void
 construct_graphs()
 {
-	author2email = lg_create_digraph();
+	email2author = lg_create_digraph();
 	author2commit = lg_create_digraph();
-	author2file = lg_create_digraph();
-	commit2file = lg_create_digraph();
+	file2author= lg_create_digraph();
+	file2commit = lg_create_digraph();
 	selem_t ignored;
 	slablist_foldr(repos, build_graphs_foldr, ignored);
 }
