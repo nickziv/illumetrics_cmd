@@ -51,6 +51,12 @@ slablist_t *repos;
 /* See constraints_t struct in illumetrics_impl.h */
 constraints_t constraints;
 
+/* the global graphs */
+lg_graph_t *author2email;
+lg_graph_t *author2commit;
+lg_graph_t *author2file;
+lg_graph_t *commit2file;
+
 /* forward declarations */
 void construct_graphs();
 
@@ -116,6 +122,7 @@ str2qwork(char *s)
  *			//top NUMBER contributors by amount of work done
  *
  */
+repo_t *find_repo(char *);
 void
 args_to_constraints(int ac, char **av)
 {
@@ -152,6 +159,19 @@ args_to_constraints(int ac, char **av)
 			}
 			break;
 		case 'r':
+			constraints.cn_repo = find_repo(optarg);
+			break;
+		case 'f':
+			constraints.cn_subtree = optarg;
+			break;
+		case 'n':
+			constraints.cn_num = atoi(optarg);
+			break;
+		case 'D':
+			/*
+			 * extract the dates. if only start date, end date is
+			 * today
+			 */
 			break;
 		}
 	}
@@ -166,9 +186,9 @@ main(int ac, char **av)
 	ILLUMETRICS_GOT_HERE(__LINE__);
 	illumetrics_umem_init();
 	git_libgit2_init();
-	args_to_constraints(ac, av);
 	open_fds();
 	load_repositories();
+	args_to_constraints(ac, av);
 	if (constraints.cn_arg == PULL) {
 		printf("Pulling in all repos...\n");
 		update_all_repos();
@@ -196,7 +216,13 @@ repo_cmp(selem_t e1, selem_t e2)
 {
 	repo_t *r1 = e1.sle_p;
 	repo_t *r2 = e2.sle_p;
-	int cmp = strcmp(r1->rp_url, r2->rp_url);
+	int cmp = strcmp(r1->rp_owner, r2->rp_owner);
+	/* If the owner is different for each repo, we are done... */
+	if (cmp) {
+		return (cmp);
+	}
+	/* ...otherwise we have to compare the name */
+	cmp = strcmp(r1->rp_name, r2->rp_name);
 	return (cmp);
 }
 
@@ -315,11 +341,12 @@ repo_derive_url(repo_t *r)
 	bzero(username, FILENAME_MAX);
 	bzero(reponame, FILENAME_MAX);
 	if (!cmp) {
+		char *fullname = url + 17;
 		/*
 		 * This is the slash ('/') that divides the username from the
 		 * repo name.
 		 */
-		char *slash = strchr(url + 17, '/');
+		char *slash = strchr(fullname, '/');
 		/*
 		 * This is the dot ('.') that divides the repo name from the
 		 * file extention (.git). We would use strchr, but a repo name
@@ -371,6 +398,24 @@ repo_derive_url(repo_t *r)
 }
 
 /*
+ * We find a repo in the repos slablist.
+ */
+void fullname_to_repo(char *, repo_t *);
+repo_t *
+find_repo(char *fullname)
+{
+	repo_t rtmp; /* used for searching the `repos` slablist */
+	selem_t slrtmp;
+	slrtmp.sle_p = &rtmp;
+	selem_t slfound;
+	fullname_to_repo(fullname, &rtmp);
+	int f = slablist_find(repos, slrtmp, &slfound);
+	if (f != SL_SUCCESS) {
+		return (NULL);
+	}
+	return ((repo_t *)slfound.sle_p);
+}
+/*
  * We use the URL to determine the VCS type. We are given the repo_type.
  */
 repo_t *
@@ -391,6 +436,19 @@ url_to_repo(char *url, rep_type_t rt)
 		return (r);
 	}
 	return (NULL);
+}
+
+/*
+ * Given a full repo name of the format <ownername>/<reponame> we fill in the
+ * repo_t struct with this info.
+ */
+void
+fullname_to_repo(char *fullname, repo_t *r)
+{
+	char *slash = strchr(fullname, '/');
+	*slash = '\0'; /* We essentially turn this single string into 2 */
+	r->rp_owner = fullname;
+	r->rp_name = slash + 1;
 }
 
 
@@ -822,10 +880,31 @@ purge_unrecognized_repos()
  * `repo_get_next_commit`, and add to each graph using the information in each
  * commit.
  */
+selem_t
+build_graphs_foldr(selem_t ignored, selem_t *e, uint64_t sz)
+{
+	uint64_t i = 0;
+	while (i < sz) {
+		repo_t *r = e[i].sle_p;
+		repo_commit_t *c = repo_get_next_commit(r);
+		/* We add an email -> author edge */
+		/* We add a author -> commit edge */
+		/* We add a file-mod -> commit edge */
+		/* We add a file-mod -> author edge */
+		i++;
+	}
+	return (ignored);
+}
+
 void
 construct_graphs()
 {
-
+	author2email = lg_create_digraph();
+	author2commit = lg_create_digraph();
+	author2file = lg_create_digraph();
+	commit2file = lg_create_digraph();
+	selem_t ignored;
+	slablist_foldr(repos, build_graphs_foldr, ignored);
 }
 
 

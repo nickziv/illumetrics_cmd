@@ -26,21 +26,21 @@
  *  
  * -A directed graph of file-modification -> author edges.
  * 
- * -An undirected graph of file-modification <-> commit edges.
+ * -A directed graph of file-modification -> commit edges.
  * 
  * 
  * And now the inter-repository graphs:
  * 
- * -An undirected graph of repository <-> author edges.
+ * -A directed graph of repository -> author edges.
  * 
  * -A directed graph of repository <-> repository merge edges.
  * 
  * And now some author-related graphs:
  * 
- * -An undirected graph of author <-> email edges. We can use this to deduce
- * the author's affiliation/patron. We can also use this to determine whether
- * two seemingly different authors are in fact the same one, since only one
- * author can own an email.
+ * -A directed graph of email -> author edges. We can use this to deduce the
+ * author's affiliation/patron. We can also use this to determine whether two
+ * seemingly different authors are in fact the same one, since only one author
+ * can own an email.
  * 
  * -An undirected graph of author <-> alias edges. Sometimes authors use
  * variations of their names, such as omitting the middle initial. We want to
@@ -51,6 +51,15 @@
  * -To build up these graphs we access the commit logs of the various
  * repositories. We do this through the |libgit2| C library made by the folks
  * at github.
+ *
+ * Note on directedness: All of the directed graphs follow a specific format:
+ * we have an entity of one type (say an email) pointing to an entity of
+ * another type (an author). In such a graph, all of the edges have an email as
+ * the source and an author as the destination. We do this, because both of
+ * these types are just strings, and this kind of constraint on the graph
+ * allows us to forgo validating the strings. From these directed graph,
+ * undirected graphs can be derived, so we don't lose anything. It's very
+ * difficult to go the other way (undirected to directed).
  *
  * Centrality Calculations:
  * ========================
@@ -179,7 +188,12 @@ typedef struct git_remote git_remote_t;
  * message. This could be useful in the future, but at the moment is not
  * needed. Besides, we want to use as little memory per commit as possible.
  */
+typedef struct sha1 {
+	uint32_t sha1_val[5];
+} sha1_t;
 typedef struct repo_commit {
+	repo_t	*rc_repo; /* bptr to repo */
+	sha1_t	*rc_sha1; /* the commit's sha1 */
 	char	*rc_author;
 	char	*rc_email;
 	char	**rc_files; /* files touched by commit */
