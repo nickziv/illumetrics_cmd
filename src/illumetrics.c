@@ -56,6 +56,8 @@ lg_graph_t *email2author;
 lg_graph_t *author2commit;
 lg_graph_t *file2author;
 lg_graph_t *file2commit;
+lg_graph_t *dir2author;
+lg_graph_t *dir2commit;
 
 /* forward declarations */
 void construct_graphs();
@@ -144,6 +146,9 @@ args_to_constraints(int ac, char **av)
 		constraints.cn_arg = REPOSITORY;
 	}
 	int c;
+	char *comma;
+	char *start_date_str;
+	char *end_date_str;
 	while ((c = getopt(ac - 1, av+1, "a:w:r:f:D:hn:d:c:")) != -1) {
 		switch (c) {
 
@@ -170,8 +175,27 @@ args_to_constraints(int ac, char **av)
 		case 'D':
 			/*
 			 * extract the dates. if only start date, end date is
-			 * today
+			 * today. We expect month/day/year[,month/day/year].
+			 * TODO We should probably be more considerate to
+			 * European users, who place the day before the month,
+			 * but this should suffice for now.
 			 */
+			start_date_str = optarg;
+			comma = strchr(optarg, ',');
+			tm_t *edate = &(constraints.cn_end_date);
+			tm_t *sdate = &(constraints.cn_start_date);
+			if (comma != NULL) {
+				*comma = '\0';
+				end_date_str = comma + 1;
+				strptime(end_date_str, "%D", edate);
+			} else {
+				/* current time */
+				time_t curtime;
+				curtime = time(NULL);
+				(void)localtime_r(&curtime, edate);
+			}
+			strptime(start_date_str, "%D",
+				sdate);
 			break;
 		}
 	}
@@ -812,6 +836,9 @@ repo_pull(repo_t *r)
 repo_commit_t *
 repo_get_next_commit(repo_t *r)
 {
+	fprintf(stderr, "Commit log functionality is not yet implemented.\n");
+	fprintf(stderr, "Bailing...\n");
+	exit(0);
 	switch (r->rp_vcs) {
 
 	case GIT:
