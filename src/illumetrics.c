@@ -76,6 +76,42 @@ str2qwork(char *s)
 }
 
 /*
+ * Intended to be used with `optarg`.
+ */
+int64_t
+str2int64(char *s)
+{
+	char *e;
+	long long r = strtoll(s, &e, 0);
+	if (r == 0 && errno == EINVAL) {
+		fprintf(stderr, "Couldn't convert '%s' into an int64_t!");
+		exit(-1);
+	}
+	return ((int64_t)r);
+}
+
+/*
+ * Intended to be used with `optarg`.
+ */
+cent_t
+str2cent(char *s)
+{
+	int cmp = strcmp("degree", s);
+	if (!cmp) {
+		return (CENT_DEGREE);
+	}
+	cmp = strcmp("closeness", s);
+	if (!cmp) {
+		return (CENT_CLOSENESS);
+	}
+	cmp = strcmp("betweenness", s);
+	if (!cmp) {
+		return (CENT_BETWEENESS);
+	}
+	return (CENT_WTF);
+}
+
+/*
  * illumetrics <argument> <parameters>
  *
  * The arguments to the command are pretty simple.
@@ -170,7 +206,7 @@ args_to_constraints(int ac, char **av)
 			constraints.cn_subtree = optarg;
 			break;
 		case 'n':
-			constraints.cn_num = atoi(optarg);
+			constraints.cn_num = str2int64(optarg);
 			break;
 		case 'D':
 			/*
@@ -197,6 +233,30 @@ args_to_constraints(int ac, char **av)
 			strptime(start_date_str, "%D",
 				sdate);
 			break;
+		case 'h':
+			constraints.cn_hist = 1;
+			break;
+		case 'd':
+			constraints.cn_dist = str2int64(optarg);
+			if (constraints.cn_dist < 0) {
+				fprintf(stderr,
+				    "distance can't be negative!\n");
+				exit(-1);
+			}
+			break;
+
+		case 'c':
+			constraints.cn_cent = str2cent(optarg);
+			if (constraints.cn_cent == CENT_WTF) {
+				fprintf(stderr,
+				    "Invalid centrality value: %s\n",
+				    optarg);
+				fprintf(stderr,
+				    "Centrality value must be one of:\n");
+				fprintf(stderr,
+				    "\t%s\n\t%s\n\t%s\n",
+				    "degree", "closeness", "betweeness");
+			}
 		}
 	}
 }

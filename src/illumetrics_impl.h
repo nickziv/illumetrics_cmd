@@ -221,6 +221,16 @@ typedef enum qwork {
 } qwork_t;
 
 /*
+ * What kind of centrality we want. May add more in the future.
+ */
+typedef enum cent {
+	CENT_DEGREE,
+	CENT_CLOSENESS,
+	CENT_BETWEENESS,
+	CENT_WTF
+} cent_t;
+
+/*
  * These are global constraints on the program. They correspond to the command
  * line parameters described in the comment above main() in illumetrics.c.
  */
@@ -229,11 +239,14 @@ typedef struct constraints {
 	arg_t	cn_arg; /* what's the first argument */
 	repo_t	*cn_repo;
 	char	*cn_subtree;
-	int	cn_num;
+	int64_t	cn_num;
+	int64_t	cn_dist; /* limiting distance */
 	tm_t	cn_start_date;
 	tm_t	cn_end_date;
 	qwork_t	cn_qwork;
+	cent_t	cn_cent;
 	int	cn_list; /* bool */
+	int	cn_hist; /* bool, for histogram */
 } constraints_t;
 
 
