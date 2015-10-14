@@ -6,6 +6,7 @@
 
 /*
  * Copyright (c) 2015, Nick Zivkovic
+ * Copyright (c) 2015, Joyent, Inc. All rights reserved.
  */
 #include "illumetrics_impl.h"
 #include <stdio.h>
