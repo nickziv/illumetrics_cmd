@@ -84,7 +84,7 @@ str2int64(char *s)
 	char *e;
 	long long r = strtoll(s, &e, 0);
 	if (r == 0 && errno == EINVAL) {
-		fprintf(stderr, "Couldn't convert '%s' into an int64_t!");
+		fprintf(stderr, "Couldn't convert '%s' into an int64_t!", s);
 		exit(-1);
 	}
 	return ((int64_t)r);
@@ -256,10 +256,20 @@ args_to_constraints(int ac, char **av)
 				fprintf(stderr,
 				    "\t%s\n\t%s\n\t%s\n",
 				    "degree", "closeness", "betweeness");
+				exit(-1);
 			}
+			break;
+
+		case ':':
+			fprintf(stderr,
+			    "Option -%c requires an operand\n",
+				optopt);
+			exit(-1);
+			break;
 		}
 	}
 }
+
 void open_fds();
 void load_repositories();
 void update_all_repos();
