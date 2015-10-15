@@ -477,7 +477,7 @@ repo_derive_url(repo_t *r)
 		ulen = i;
 		cur++; /* jump over the slash */
 		i = 0;
-		while (cur != dot) {
+		while (*cur != *dot) {
 			reponame[i] = *cur;
 			i++;
 			cur++;
